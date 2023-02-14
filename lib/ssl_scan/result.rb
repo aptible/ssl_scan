@@ -13,7 +13,7 @@ module SSLScan
       @cert = nil
       @ciphers = Set.new
       @peer_verified = false
-      @supported_versions = [:SSLv2, :SSLv3, :TLSv1]
+      @supported_versions = [:SSLv2, :SSLv3, :TLSv1, :TLSv1_1, :TLSv1_2]
     end
 
     def cert
@@ -37,6 +37,14 @@ module SSLScan
 
     def tlsv1
       @ciphers.reject{|cipher| cipher[:version] != :TLSv1 }
+    end
+
+    def tlsv1_1
+      @ciphers.reject{|cipher| cipher[:version] != :TLSv1_1 }
+    end
+
+    def tlsv1_2
+      @ciphers.reject{|cipher| cipher[:version] != :TLSv1_2 }
     end
 
     def weak_ciphers
@@ -91,8 +99,16 @@ module SSLScan
       !(accepted(:TLSv1).empty?)
     end
 
+    def supports_tlsv1_1?
+      !(accepted(:TLSv1_1).empty?)
+    end
+
+    def supports_tlsv1_2?
+      !(accepted(:TLSv1_2).empty?)
+    end
+
     def supports_ssl?
-      supports_sslv2? or supports_sslv3? or supports_tlsv1?
+      supports_sslv2? or supports_sslv3? or supports_tlsv1? or supports_tlsv1_1? or supports_tlsv1_2?
     end
 
     def supports_weak_ciphers?
@@ -119,7 +135,7 @@ module SSLScan
       unless OpenSSL::SSL::SSLContext.new(version).ciphers.flatten.include? cipher
         raise ArgumentError, "Must be a valid SSL Cipher for #{version}!"
       end
-      unless key_length.kind_of? Fixnum
+      unless key_length.kind_of? Integer
         raise ArgumentError, "Must supply a valid key length"
       end
       unless [:accepted, :rejected, :failed].include? status
@@ -152,7 +168,7 @@ module SSLScan
         case version
         when :all
           return @ciphers.select { |cipher| cipher[:status] == state }
-        when :SSLv2, :SSLv3, :TLSv1
+        when :SSLv2, :SSLv3, :TLSv1, :TLSv1_1, :TLSv1_2
           return @ciphers.select { |cipher| cipher[:status] == state and cipher[:version] == version }
         else
           raise ArgumentError, "Invalid SSL Version Supplied: #{version}"

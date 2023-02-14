@@ -65,6 +65,10 @@ begin
         version = :SSLv23
       when 'TLS1', :TLSv1
         version = :TLSv1
+      when 'TLS1_1', :TLSv1_1
+        version = :TLSv1_1
+      when 'TLS1_2', :TLSv1_2
+        version = :TLSv1_2
       end
     end
 

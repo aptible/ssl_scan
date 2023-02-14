@@ -194,6 +194,8 @@ EOH
       options.only_ssl2 = false
       options.only_ssl3 = false
       options.only_tls1 = false
+      options.only_tls1_1 = false
+      options.only_tls1_2 = false
       options.only_cert = false
 
       opts = OptionParser.new do |opts|
@@ -231,6 +233,16 @@ EOH
         opts.on( "--tls1",
                  "Only check TLSv1 ciphers.") do
           options.only_tls1 = :TLSv1
+        end
+
+        opts.on( "--tls1_1",
+                 "Only check TLSv1_1 ciphers.") do
+          options.only_tls1 = :TLSv1_1
+        end
+
+        opts.on( "--tls1_2",
+                 "Only check TLSv1_2 ciphers.") do
+          options.only_tls1 = :TLSv1_2
         end
 
         opts.on( "-c",

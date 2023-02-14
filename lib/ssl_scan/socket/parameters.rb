@@ -116,7 +116,7 @@ class SSLScan::Socket::Parameters
       self.ssl = false
     end
 
-    supported_ssl_versions = ['SSL2', 'SSL23', 'TLS1', 'SSL3', :SSLv2, :SSLv3, :SSLv23, :TLSv1]
+    supported_ssl_versions = ['SSL2', 'SSL23', 'TLS1', 'SSL3', 'TLS1_1', 'TLS1_2', :SSLv2, :SSLv3, :SSLv23, :TLSv1, :TLSv1_1, :TLSv1_2]
     if (hash['SSLVersion'] and supported_ssl_versions.include? hash['SSLVersion'])
       self.ssl_version = hash['SSLVersion']
     end

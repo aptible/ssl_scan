@@ -11,6 +11,7 @@ class Scanner
   attr_reader :peer_supported_versions
   attr_reader :results
   attr_reader :sslv2
+  attr_reader :sslv3
 
   # Initializes the scanner object
   # @param host [String] IP address or hostname to scan
@@ -23,11 +24,15 @@ class Scanner
     @timeout    = timeout
     @context    = context
     if check_opensslv2 == true
-      @supported_versions = [:SSLv2, :SSLv3, :TLSv1]
+      @supported_versions = [:SSLv2, :SSLv3, :TLSv1, :TLSv1_1, :TLSv1_2]
       @sslv2 = true
-    else
-      @supported_versions = [:SSLv3, :TLSv1]
+    elsif check_opensslv3 == true
+      @supported_versions = [:SSLv3, :TLSv1, :TLSv1_1, :TLSv1_2]
       @sslv2 = false
+    else
+      @supported_versions = [:TLSv1, :TLSv1_1, :TLSv1_2]
+      @sslv2 = false
+      @sslv3 = false
     end
     @peer_supported_versions = []
     raise StandardError, "The scanner configuration is invalid" unless valid?
@@ -41,9 +46,9 @@ class Scanner
     rescue
       return false
     end
-    return false unless @port.kind_of? Fixnum
+    return false unless @port.kind_of? Integer
     return false unless @port >= 0 and @port <= 65535
-    return false unless @timeout.kind_of? Fixnum
+    return false unless @timeout.kind_of? Integer
     return true
   end
 
@@ -52,6 +57,7 @@ class Scanner
   def scan(&block)
     scan_result = SSLScan::Result.new
     scan_result.openssl_sslv2 = sslv2
+    scan_result.openssl_sslv3 = sslv3
     # If we can't get any SSL connection, then don't bother testing
     # individual ciphers.
     
@@ -74,6 +80,8 @@ class Scanner
       psv << :SSLv2 if scan_result.supports_sslv2?
       psv << :SSLv3 if scan_result.supports_sslv3?
       psv << :TLSv1 if scan_result.supports_tlsv1?
+      psv << :TLSv1_1 if scan_result.supports_tlsv1_1?
+      psv << :TLSv1_2 if scan_result.supports_tlsv1_2?
     end
     @results = scan_result
     scan_result
@@ -212,7 +220,7 @@ class Scanner
   end
 
   # Tests the specified SSL Version and Cipher against the configured target
-  # @param ssl_version [Symbol] The SSL version to use (:SSLv2,  :SSLv3, :TLSv1)
+  # @param ssl_version [Symbol] The SSL version to use (:SSLv2,  :SSLv3, :TLSv1, :TLSv1_1, :TLSv1_2)
   # @param cipher [String] The SSL Cipher to use
   # @return [Symbol] Either :accepted or :rejected
   def test_cipher(ssl_version, cipher)
@@ -243,7 +251,7 @@ class Scanner
   end
 
   # Retrieve the X509 Cert from the target service,
-  # @param ssl_version [Symbol] The SSL version to use (:SSLv2,  :SSLv3, :TLSv1)
+  # @param ssl_version [Symbol] The SSL version to use (:SSLv2,  :SSLv3, :TLSv1, :TLSv1_1, :TLSv1_2)
   # @param cipher [String] The SSL Cipher to use
   # @return [OpenSSL::X509::Certificate] if the certificate was retrieved
   # @return [Nil] if the cert couldn't be retrieved
@@ -278,7 +286,7 @@ class Scanner
 
   # Validates that the SSL Version and Cipher are valid both seperately and
   # together as part of an SSL Context.
-  # @param ssl_version [Symbol] The SSL version to use (:SSLv2,  :SSLv3, :TLSv1)
+  # @param ssl_version [Symbol] The SSL version to use (:SSLv2,  :SSLv3, :TLSv1, :TLSv1_1, :TLSv1_2)
   # @param cipher [String] The SSL Cipher to use
   # @raise [StandardError] If an invalid or unsupported SSL Version was supplied
   # @raise [StandardError] If the cipher is not valid for that version of SSL
@@ -299,6 +307,15 @@ class Scanner
   def check_opensslv2
     begin
       OpenSSL::SSL::SSLContext.new(:SSLv2)
+    rescue
+      return false
+    end
+    return true
+  end
+
+  def check_opensslv3
+    begin
+      OpenSSL::SSL::SSLContext.new(:SSLv3)
     rescue
       return false
     end

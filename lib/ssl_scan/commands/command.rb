@@ -33,7 +33,7 @@ module SSLScan
       def write_ciphers(scanner=nil)
         stream.printf _("\nSupported Server Cipher(s):\n")
 
-        sslv = options.only_ssl2 || options.only_ssl3 || options.only_tls1 || false
+        sslv = options.only_ssl2 || options.only_ssl3 || options.only_tls1 || options.only_tls1_1 || options.only_tls1_2 false
         
         if sslv
           scanner.scan_ssl_version(sslv) do |ssl_version, cipher_name, alg_length, status|
